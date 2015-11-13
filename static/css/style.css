@@ -1,0 +1,36 @@
+body {
+  background-color: white;
+  font-family: 'courier new';
+}
+
+.cell {
+  width: 25px;
+  height: 25px;
+  line-height: 25px;
+  background: darkgrey;
+  margin-right: 1px;
+  margin-bottom: 1px;
+  text-align: center;
+}
+
+.has-mine {
+  background: crimson;
+}
+
+.has-flag {
+  background-image: url('../../static/img/flag.png');
+  background-size: 25px;
+  /*background: yellow;*/
+  /*margin: 0px;*/
+}
+
+.revealed {
+  opacity: 0.5;
+}
+
+.row {
+  /*float: left;*/
+  display: inline-block;
+  margin-bottom: 5px;
+}
+
