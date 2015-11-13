@@ -17,7 +17,7 @@ function Board (size, nMines) {
     for (var i = 0; i < this.size; i++) {
       this.board.push([]);
       for (var j = 0; j < this.size; j++) {
-        this.board[i].push(new Cell(i, j, 'unknown', false));
+        this.board[i].push(new Cell({col: i, row: j, state: 'unknown', false}));
       };
     };
   };
@@ -192,13 +192,13 @@ function Board (size, nMines) {
   return this;
 }
 
-function Cell (col, row, state, hasMine) {
+function Cell (x, y, options) {
   // TODO: change call signature to options object
 
   this.initialize = function() {
-    this.col = col;
-    this.row = row;
-    this.state = state || 'unknown';
+    _.defaults()
+    // this.col = col;
+    // this.row = row;
     this.hasMine = hasMine;
 
     this.cellId = 'cell-' + this.row + '-' + this.col;
