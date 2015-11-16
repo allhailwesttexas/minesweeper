@@ -4,16 +4,59 @@
 <head>
   <title>Minesweeper</title>
   <link rel="stylesheet" type="text/css" href="static/css/style.css">
-
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
 </head>
 <body>
-  <h1>Minesweeper!</h1>
-  <div id="game-container"></div>
-  <button id='reveal'>Toggle Reveal Mines</button>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4">
+        <div id="game-container">
+          <h1>Minesweeper!</h1>
+          <div id="minesweeper"></div>
+
+          <button class='btn btn-default' id='reveal'>Toggle Reveal Mines</button>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div id="leaderboard-container">
+          <h1>Leaderboard</h1>
+          <ol id="leaderboard"></ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trigger the modal with a button -->
+    <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#win-game-modal">Open Modal</button>
+
+    <!-- Modal -->
+    <div class="modal fade" id="win-game-modal" role="dialog">
+      <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">You won the game! *fireworks*</h4>
+            <p>Please type in your name below.</p>
+          </div>
+          <div class="modal-body">
+            <input type="text" id="winner-name" value="Kelvin"></input>
+          </div>
+          <div class="modal-footer">
+            <button id="submit-leaderboard" type="button" class="btn btn-default" data-dismiss="modal">Hooray!</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
 
   <script src='https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore.js'></script>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.js'></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js" integrity="sha256-Sk3nkD6mLTMOF0EOpNtsIry+s1CsaqQC1rVLTAy+0yc= sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
   <script src="static/js/util.js"></script>
   <script src="static/js/app.js"></script>
+  <script src="static/js/leaderboard.js"></script>
 </body>
 </html>

@@ -20,17 +20,33 @@ body {
 .has-flag {
   background-image: url('../../static/img/flag.png');
   background-size: 25px;
-  /*background: yellow;*/
-  /*margin: 0px;*/
 }
 
 .revealed {
   opacity: 0.5;
 }
 
-.row {
+.game-row {
   /*float: left;*/
   display: inline-block;
   margin-bottom: 5px;
 }
 
+.noselect {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+#timer {
+  margin-left: 20px;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+#reset {
+  /*display: inline-block;*/
+}
