@@ -1,15 +1,60 @@
-'use strict';
 
-function Board (size, nMines) {
+function Minesweeper (elem, options) {
+  this.initialize = function() {
+    var options = _.defaults({}, options, {
+      size: 9, nMines: 10, useTimer: true});
 
-  // logic
+    this.useTimer = options.useTimer;
+    this.elem = $(elem);
+    this.setUpHtml();
+
+    var boardOptions = _.pick(options, ['size', 'nMines']);
+    boardOptions.elem = this.elems.board;
+    this.board = new Board(boardOptions);
+  };
+
+  this.setUpHtml = function() {
+    this.elems = {
+      game: this.elem,
+      board: $('<div></div>').attr('id', 'board'),
+      timer: $('<div></div>').attr('id', 'timer').html(0),
+      reset: $('<button></button>')
+        .attr('id', 'reset')
+        .addClass(['btn btn-default'])
+        .html('☺')
+    }
+    this.elems.game.append(this.elems.board);
+    this.elems.game.prepend(this.elems.timer);
+    this.elems.game.prepend(this.elems.reset);
+  };
+
+  this.reset = function() {
+    this.board.initialize();
+    // this.timer.
+
+  };
+
+  this.initialize();
+}
+
+function Board (options) {
 
   this.initialize = function() {
+    var options = _.defaults({}, options, {
+      size: 9, nMines: 10, elem: $('#board')});
+
+    this.size = options.size;
+    this.nMines = options.nMines;
+    this.elem = options.elem;
+
     this.createBoardArray();
     var mines = this.generateMines(this.nMines);
     this.addMines(mines);
     this.initializeBoard();
     this.registerClickHandlers();
+    this.startTimer = _.once(this.startTimer);
+    this.revealCount = 0;
+    this.winThreshold = this.size * this.size - this.nMines;
   };
 
   this.createBoardArray = function() {
@@ -17,9 +62,9 @@ function Board (size, nMines) {
     for (var i = 0; i < this.size; i++) {
       this.board.push([]);
       for (var j = 0; j < this.size; j++) {
-        this.board[i].push(new Cell(i, j, 'unknown', false));
-      };
-    };
+        this.board[i].push(new Cell(i, j));
+      }
+    }
   };
 
   this.generateMines = function(count) {
@@ -51,27 +96,14 @@ function Board (size, nMines) {
                 [row-1, col], [row+1, col],
                 [row-1, col+1], [row, col+1],[row+1, col+1]]
       .filter(function(pair) {
-        // now filter out inds outside the board - so bigger than self.size and smaller than 0
+        // filter out indices outside the board - so bigger than self.size and smaller than 0
         return !(pair[0] >= (self.size) || pair[1] >= (self.size) || pair[0] < 0 || pair[1] < 0);
       });
 
     return inds.map(function(pair) {
-      return self.getCell(pair[0], pair[1])
+      return self.getCell(pair[0], pair[1]);
     }, this);
-  }
-
-  this.getDirectlyAdjacentCells = function(row, col) {
-    var self = this;
-    var inds = [[row, col-1], [row-1, col], [row+1, col], [row, col+1]]
-      .filter(function(pair) {
-        // now filter out inds outside the board - so bigger than self.size and smaller than 0
-        return !(pair[0] >= (self.size) || pair[1] >= (self.size) || pair[0] < 0 || pair[1] < 0);
-      });
-
-    return inds.map(function(pair) {
-      return self.getCell(pair[0], pair[1])
-    }, this);
-  }
+  };
 
   this.getAdjacentCount = function(row, col) {
     // the row and col are flipped for the cell when initialised I think
@@ -82,27 +114,20 @@ function Board (size, nMines) {
     }, 0);
   };
 
-  this.getDirectlyAdjacentCount = function(row, col) {
-    return this.getDirectlyAdjacentCells(col, row).reduce(function(prev, cell) {
-      return cell.hasMine ? prev + 1 : prev;
-    }, 0);
-
-  };
-
   // UI related functions below
 
   this.initializeBoard = function () {
-    $('#game-container').empty();
+    this.elem.empty();
 
     for (var i = 0; i < this.board.length; i++) {
-      var rowId = 'row-' + i
-      $('#game-container').append('<div id=' + rowId + ' ' + 'class=row></div>')
+      var rowId = 'row-' + i;
+      this.elem.append('<div id=' + rowId + ' ' + 'class=game-row></div>');
 
       for (var j = 0; j < this.board.length; j++) {
         $('#' + rowId).append(this.board[i][j].elem);
-      };
-    };
-  }
+      }
+    }
+  };
 
   this.render = function() {
     _.each(this.board, function(row) {
@@ -110,7 +135,6 @@ function Board (size, nMines) {
         cell.render();
       });
     });
-    console.log('rendering board!');
   };
 
   this.toggleRevealMines = function() {
@@ -134,36 +158,58 @@ function Board (size, nMines) {
   this.registerClickHandlers = function() {
     _.each(this.board, function(row) {
       _.each(row, function(cell) {
-        cell.elem.on('click', {cell: cell, board: this}, this.onCellLeftClick)
-        cell.elem.on('contextmenu', {cell: cell, board: this}, this.onCellRightClick)
+        cell.elem.on('click', {cell: cell, board: this}, this.onCellLeftClick);
+        cell.elem.on('contextmenu', {cell: cell, board: this}, this.onCellRightClick);
+      }, this);
+    }, this);
+  };
+
+  this.unregisterClickHandlers = function() {
+    _.each(this.board, function(row) {
+      _.each(row, function(cell) {
+        cell.elem.off('click');
+        cell.elem.off('contextmenu');
       }, this);
     }, this);
   };
 
   this.onCellLeftClick = function(e) {
-    // console.log('cell left click', e)
     var cell = e.data.cell;
     var board = e.data.board;
     board.revealCell(cell);
   };
 
+  this.startTimer = function() {
+    var t = parseInt($('#timer').text());
+    return setInterval(function() {
+      $('#timer').text(++t);
+    }, 1000);
+  };
+
   this.revealSingleCell = function(cell) {
+    this.timerID = this.startTimer();
+    if (!cell.isRevealed) this.revealCount++;
     cell.isRevealed = true;
+    cell.hasFlag = false;
+    // console.log("revealCount", this.revealCount);
     if (cell.hasMine) {
-      // alert('you lose! *explosions*')
       this.revealAll();
+      this.endGame();
     }
+    if (this.revealCount === this.winThreshold)
+      this.winGame();
     cell.render();
   };
 
   this.revealCell = function(cell) {
-    this.revealSingleCell(cell)
+    this.revealSingleCell(cell);
 
-    // if the adjacentCount is zero, reveal & keep going in all surrounding cells
-    if (cell.adjacentCount == 0) {
+    // if the adjacentCount is zero, reveal, then keep going in all surrounding cells
+    if (cell.adjacentCount === 0) {
       var candidates = this.getAdjacentCells(cell.col, cell.row);
-      var checked = {};
+      var checked = {};  // keep track of which cells have been checked
 
+      // keep revealing as long as there are candidate cells
       while (candidates.length) {
 
         var current = candidates.pop();
@@ -171,7 +217,9 @@ function Board (size, nMines) {
         checked[current.toString()] = true;
 
         if (!current.hasMine) this.revealSingleCell(current);
-        if (this.getAdjacentCount(current.row, current.col) == 0)
+        // If we hit another cell with zero adjacents, add all new
+        // candidates
+        if (this.getAdjacentCount(current.row, current.col) === 0)
           candidates = _.union(candidates,
                                this.getAdjacentCells(current.col, current.row));
       }
@@ -181,32 +229,50 @@ function Board (size, nMines) {
   this.onCellRightClick = function(e) {
     e.preventDefault();
     var cell = e.data.cell;
-    cell.hasFlag = !cell.hasFlag;
-    // console.log('cell right click', e)
+    if (!cell.isRevealed) cell.hasFlag = !cell.hasFlag;
     cell.render();
   };
 
-  this.size = size;
-  this.nMines = nMines;
+  this.endGame = function() {
+    clearInterval(this.timerID);
+    this.unregisterClickHandlers();
+    // this.winGame();
+
+  };
+
+  this.winGame = function() {
+    // alert('You won the game!');
+    this.revealAll();
+    var lb = JSON.parse(localStorage.getItem('leaderboard')) || [];
+    $('#win-game-modal').modal('show');
+    $('#submit-leaderboard').submit(function() {
+      console.log($('#winner-name'));
+      console.log($('#winner-name').value);
+      lb.push({name: $('#winner-name').value, time: $('#timer').text()});
+      localStorage.setItem('leaderboard', JSON.stringify(lb));
+    });
+
+  };
+
   this.initialize();
   return this;
 }
 
-function Cell (col, row, state, hasMine) {
-  // TODO: change call signature to options object
+function Cell (col, row, options) {
 
   this.initialize = function() {
+    var options = _.defaults({}, options, {
+      hasMine: false, hasFlag: false, isRevealed: false, adjacentCount: 0});
     this.col = col;
     this.row = row;
-    this.state = state || 'unknown';
-    this.hasMine = hasMine;
+    this.hasMine = options.hasMine;
+    this.hasFlag = options.hasFlag;
+    this.isRevealed = options.isRevealed;
+    this.adjacentCount = options.adjacentCount;
 
     this.cellId = 'cell-' + this.row + '-' + this.col;
-    this.elem = $('<div></div>', {'class': 'cell', 'id': this.cellId});
-    this.hasFlag = false;
-    this.isRevealed = false;
-    this.adjacentCount = 0;  // unknown to start with
-    this.elem.html('&nbsp;');
+    this.elem = $('<div></div>', {'class': 'cell noselect', 'id': this.cellId});
+    this.elem.html(this.hasMine ? '&nbsp;' : this.adjacentCount || '&nbsp;');
   };
 
   this.render = function () {
@@ -233,7 +299,7 @@ function Cell (col, row, state, hasMine) {
       this.elem.removeClass('revealed');
       this.elem.html('&nbsp;');
     }
-  }
+  };
 
   this.toString = function() {
     return this.cellId;
@@ -243,8 +309,11 @@ function Cell (col, row, state, hasMine) {
   return this;
 }
 
-var board = new Board(9, 10);
+var minesweeper = new Minesweeper('#minesweeper', {size: 9, nMines: 10, useTimer: true});
+$('#reset').on('click', function() {
+  minesweeper.reset();
+});
 
 $('#reveal').on('click', function(e) {
-  board.toggleRevealMines();
+  minesweeper.board.toggleRevealMines();
 });
