@@ -50,3 +50,6 @@ body {
 #reset {
   /*display: inline-block;*/
 }
+.modal {
+  width: 60%;
+}

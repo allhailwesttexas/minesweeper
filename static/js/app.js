@@ -20,7 +20,7 @@ function Minesweeper (elem, options) {
       timer: $('<div></div>').attr('id', 'timer').html(0),
       reset: $('<button></button>')
         .attr('id', 'reset')
-        .addClass(['btn btn-default'])
+        .addClass('btn btn-default')
         .html('☺')
     }
     this.elems.game.append(this.elems.board);
@@ -30,8 +30,8 @@ function Minesweeper (elem, options) {
 
   this.reset = function() {
     this.board.initialize();
-    // this.timer.
-
+    clearInterval(this.board.timerID);
+    this.elems.timer.html(0)
   };
 
   this.initialize();
@@ -52,9 +52,9 @@ function Board (options) {
     this.addMines(mines);
     this.initializeBoard();
     this.registerClickHandlers();
-    this.startTimer = _.once(this.startTimer);
     this.revealCount = 0;
     this.winThreshold = this.size * this.size - this.nMines;
+    this.untouched = true;
   };
 
   this.createBoardArray = function() {
@@ -187,11 +187,15 @@ function Board (options) {
   };
 
   this.revealSingleCell = function(cell) {
-    this.timerID = this.startTimer();
+
+    if (this.untouched) {
+      this.timerID = this.startTimer()
+      this.untouched = false;
+    }
+
     if (!cell.isRevealed) this.revealCount++;
     cell.isRevealed = true;
     cell.hasFlag = false;
-    // console.log("revealCount", this.revealCount);
     if (cell.hasMine) {
       this.revealAll();
       this.endGame();
@@ -217,8 +221,7 @@ function Board (options) {
         checked[current.toString()] = true;
 
         if (!current.hasMine) this.revealSingleCell(current);
-        // If we hit another cell with zero adjacents, add all new
-        // candidates
+        // If we hit another cell with zero adjacents, add all new candidates
         if (this.getAdjacentCount(current.row, current.col) === 0)
           candidates = _.union(candidates,
                                this.getAdjacentCells(current.col, current.row));
@@ -236,22 +239,15 @@ function Board (options) {
   this.endGame = function() {
     clearInterval(this.timerID);
     this.unregisterClickHandlers();
-    // this.winGame();
 
   };
 
   this.winGame = function() {
-    // alert('You won the game!');
     this.revealAll();
+    this.endGame();
+
     var lb = JSON.parse(localStorage.getItem('leaderboard')) || [];
     $('#win-game-modal').modal('show');
-    $('#submit-leaderboard').submit(function() {
-      console.log($('#winner-name'));
-      console.log($('#winner-name').value);
-      lb.push({name: $('#winner-name').value, time: $('#timer').text()});
-      localStorage.setItem('leaderboard', JSON.stringify(lb));
-    });
-
   };
 
   this.initialize();
@@ -314,6 +310,16 @@ $('#reset').on('click', function() {
   minesweeper.reset();
 });
 
-$('#reveal').on('click', function(e) {
-  minesweeper.board.toggleRevealMines();
+// $('#reveal').on('click', function(e) {
+//   minesweeper.board.toggleRevealMines();
+// });
+
+$('#new-leaderboard-score').on('submit', function(e) {
+  var lb = JSON.parse(localStorage.getItem('leaderboard')) || [];
+  lb.push({name: $('#winner-name').val(), time: $('#timer').text()});
+  localStorage.setItem('leaderboard', JSON.stringify(lb));
+  populateLeaderboard();
+  $('#win-game-modal').modal('hide');
+  e.preventDefault();
 });
+
