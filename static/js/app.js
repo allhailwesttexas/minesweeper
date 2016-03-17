@@ -310,10 +310,6 @@ $('#reset').on('click', function() {
   minesweeper.reset();
 });
 
-// $('#reveal').on('click', function(e) {
-//   minesweeper.board.toggleRevealMines();
-// });
-
 $('#new-leaderboard-score').on('submit', function(e) {
   var lb = JSON.parse(localStorage.getItem('leaderboard')) || [];
   lb.push({name: $('#winner-name').val(), time: $('#timer').text()});
